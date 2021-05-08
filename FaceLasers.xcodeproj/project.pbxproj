@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		1C5EDB0226466E9E00421759 /* LaserView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C5EDB0126466E9E00421759 /* LaserView.swift */; };
 		5394F02521864DF5006E754C /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 5394F02321864DF4006E754C /* LaunchScreen.storyboard */; };
 		9FE0FDF721F66CBE002F945C /* UIViewExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FE0FDF621F66CBE002F945C /* UIViewExtension.swift */; };
 		9FE158AF21E836510090DA43 /* FaceDetectionViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FE158AE21E836510090DA43 /* FaceDetectionViewController.swift */; };
@@ -19,7 +18,6 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		1C5EDB0126466E9E00421759 /* LaserView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LaserView.swift; sourceTree = "<group>"; };
 		5394F02421864DF4006E754C /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		9FE0FDF621F66CBE002F945C /* UIViewExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIViewExtension.swift; sourceTree = "<group>"; };
 		9FE158AE21E836510090DA43 /* FaceDetectionViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FaceDetectionViewController.swift; sourceTree = "<group>"; };
@@ -77,7 +75,6 @@
 				D2A5F2201F4A96D0005CD714 /* AppDelegate.swift */,
 				9FE158AE21E836510090DA43 /* FaceDetectionViewController.swift */,
 				9FE158BB21EA371C0090DA43 /* FaceView.swift */,
-				1C5EDB0126466E9E00421759 /* LaserView.swift */,
 				D2A5F2071F4A9144005CD714 /* Main.storyboard */,
 				5394F02321864DF4006E754C /* LaunchScreen.storyboard */,
 				D2A5F20A1F4A9144005CD714 /* Assets.xcassets */,
@@ -162,7 +159,6 @@
 				9FE158BA21E852010090DA43 /* CoreGraphicsExtensions.swift in Sources */,
 				9FE0FDF721F66CBE002F945C /* UIViewExtension.swift in Sources */,
 				9FE158AF21E836510090DA43 /* FaceDetectionViewController.swift in Sources */,
-				1C5EDB0226466E9E00421759 /* LaserView.swift in Sources */,
 				9FE158BC21EA371C0090DA43 /* FaceView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

@@ -34,8 +34,10 @@ class FaceDetectionViewController: UIViewController {
   var sequenceHandler = VNSequenceRequestHandler()
 
   @IBOutlet var faceView: FaceView!
-  @IBOutlet var laserView: LaserView!
   @IBOutlet var faceLaserLabel: UILabel!
+  @IBOutlet weak var counterview: UILabel!
+  
+  var blinkCounter : Int = 0
   
   let session = AVCaptureSession()
   var previewLayer: AVCaptureVideoPreviewLayer!
@@ -55,9 +57,7 @@ class FaceDetectionViewController: UIViewController {
   override func viewDidLoad() {
     super.viewDidLoad()
     configureCaptureSession()
-    
-    laserView.isHidden = true
-    
+        
     maxX = view.bounds.maxX
     midY = view.bounds.midY
     maxY = view.bounds.maxY
@@ -71,13 +71,13 @@ class FaceDetectionViewController: UIViewController {
 extension FaceDetectionViewController {
   @IBAction func handleTap(_ sender: UITapGestureRecognizer) {
     faceView.isHidden.toggle()
-    laserView.isHidden.toggle()
+    
     faceViewHidden = faceView.isHidden
     
     if faceViewHidden {
-      faceLaserLabel.text = "Lasers"
+      faceLaserLabel.text = "Show"
     } else {
-      faceLaserLabel.text = "Face"
+      faceLaserLabel.text = "Hide"
     }
   }
 }
@@ -257,10 +257,16 @@ extension FaceDetectionViewController {
       let EARLeft = getEARLeft(eyePoints: leftEyeNormalizedPoints!)
       let EARRight = getEARRight(eyePoints: rightEyeNormalizedPoints!)
       let EAR = (EARLeft + EARRight) / 2
-      if (EAR < 2.82) {
+      if (EAR < 2.84) {
         if (FaceDetectionViewController.isEyeClosed == false) {
           FaceDetectionViewController.isEyeClosed = true
           print(EAR)
+          DispatchQueue.global(qos: .background).async {
+                DispatchQueue.main.async {
+                  self.counterview.text = "EyeBlinked: " + "\(self.blinkCounter + 1)"
+                  self.blinkCounter += 1
+                }
+          }
         }
       }
       else {
@@ -284,7 +290,13 @@ extension FaceDetectionViewController {
         faceView.clear()
         return
     }
-
     updateFaceView(for: result)
+  }
+}
+
+extension FaceDetectionViewController {
+  func updateCounter() {
+    counterview.text = "cnt: " + "\(blinkCounter + 1)"
+    blinkCounter += 1
   }
 }
