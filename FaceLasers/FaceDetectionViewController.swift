@@ -85,6 +85,8 @@ extension FaceDetectionViewController {
 // MARK: - Video Processing methods
 
 extension FaceDetectionViewController {
+  // MARK: - EAR Methods
+  
   func configureCaptureSession() {
     // Define the capture device we want to use
     guard let camera = AVCaptureDevice.default(.builtInWideAngleCamera,
@@ -176,7 +178,11 @@ extension FaceDetectionViewController {
     return points.compactMap { landmark(point: $0, to: rect) }
   }
   
+  // EyeClosed
+  static var isEyeClosed: Bool = false
+  
   func updateFaceView(for result: VNFaceObservation) {
+    
     defer {
       DispatchQueue.main.async {
         self.faceView.setNeedsDisplay()
@@ -189,108 +195,84 @@ extension FaceDetectionViewController {
     guard let landmarks = result.landmarks else {
       return
     }
+    
+    // MARK: - EAR methods
+    func CGPointDistanceSquared(from: CGPoint, to: CGPoint) -> CGFloat {
+        return (from.x - to.x) * (from.x - to.x) + (from.y - to.y) * (from.y - to.y)
+    }
 
+    func CGPointDistance(from: CGPoint, to: CGPoint) -> CGFloat {
+        return sqrt(CGPointDistanceSquared(from: from, to: to))
+    }
+    
+    // MARK: - EAR calculation
+    var leftEyeNormalizedPoints : [CGPoint]?
+    var rightEyeNormalizedPoints : [CGPoint]?
+    var leftFlag = false
+    var rightFlag = false
+    
+    func getEARLeft(eyePoints: [CGPoint]) -> CGFloat {
+      let p1 = eyePoints[1]
+      let p2 = eyePoints[5]
+      let p3 = eyePoints[4]
+      let p4 = eyePoints[0]
+      let p5 = eyePoints[2]
+      let p6 = eyePoints[3]
+      return
+        (CGPointDistance(from: p2, to: p6) + CGPointDistance(from: p3, to: p5)) /
+        (CGPointDistance(from: p1, to: p4))
+    }
+    
+    func getEARRight(eyePoints: [CGPoint]) -> CGFloat {
+      let p1 = eyePoints[1]
+      let p2 = eyePoints[5]
+      let p3 = eyePoints[4]
+      let p4 = eyePoints[0]
+      let p5 = eyePoints[2]
+      let p6 = eyePoints[3]
+      return
+        (CGPointDistance(from: p2, to: p6) + CGPointDistance(from: p3, to: p5)) /
+        (CGPointDistance(from: p1, to: p4))
+    }
+   
     if let leftEye = landmark(
       points: landmarks.leftEye?.normalizedPoints,
       to: result.boundingBox) {
+      leftEyeNormalizedPoints = landmarks.leftEye?.normalizedPoints
+      leftFlag = true
       faceView.leftEye = leftEye
     }
+
 
     if let rightEye = landmark(
       points: landmarks.rightEye?.normalizedPoints,
       to: result.boundingBox) {
+      rightEyeNormalizedPoints = landmarks.rightEye?.normalizedPoints
+      rightFlag = true
       faceView.rightEye = rightEye
     }
+    
 
-    if let leftEyebrow = landmark(
-      points: landmarks.leftEyebrow?.normalizedPoints,
-      to: result.boundingBox) {
-      faceView.leftEyebrow = leftEyebrow
-    }
-
-    if let rightEyebrow = landmark(
-      points: landmarks.rightEyebrow?.normalizedPoints,
-      to: result.boundingBox) {
-      faceView.rightEyebrow = rightEyebrow
-    }
-
-    if let nose = landmark(
-      points: landmarks.nose?.normalizedPoints,
-      to: result.boundingBox) {
-      faceView.nose = nose
-    }
-
-    if let outerLips = landmark(
-      points: landmarks.outerLips?.normalizedPoints,
-      to: result.boundingBox) {
-      faceView.outerLips = outerLips
-    }
-
-    if let innerLips = landmark(
-      points: landmarks.innerLips?.normalizedPoints,
-      to: result.boundingBox) {
-      faceView.innerLips = innerLips
-    }
-
-    if let faceContour = landmark(
-      points: landmarks.faceContour?.normalizedPoints,
-      to: result.boundingBox) {
-      faceView.faceContour = faceContour
+    if (leftFlag && rightFlag) {
+      let EARLeft = getEARLeft(eyePoints: leftEyeNormalizedPoints!)
+      let EARRight = getEARRight(eyePoints: rightEyeNormalizedPoints!)
+      let EAR = (EARLeft + EARRight) / 2
+      if (EAR < 2.82) {
+        if (FaceDetectionViewController.isEyeClosed == false) {
+          FaceDetectionViewController.isEyeClosed = true
+          print(EAR)
+        }
+      }
+      else {
+        if (FaceDetectionViewController.isEyeClosed == true) {
+          FaceDetectionViewController.isEyeClosed = false
+        }
+      }
     }
   }
 
   // MARK - Laser
   // 1
-  func updateLaserView(for result: VNFaceObservation) {
-    // 2
-    laserView.clear()
-
-    // 3
-    let yaw = result.yaw ?? 0.0
-
-    // 4
-    if yaw == 0.0 {
-      return
-    }
-
-    // 5
-    var origins: [CGPoint] = []
-
-    // 6
-    if let point = result.landmarks?.leftPupil?.normalizedPoints.first {
-      let origin = landmark(point: point, to: result.boundingBox)
-      origins.append(origin)
-    }
-
-    // 7
-    if let point = result.landmarks?.rightPupil?.normalizedPoints.first {
-      let origin = landmark(point: point, to: result.boundingBox)
-      origins.append(origin)
-    }
-
-    // 1
-    let avgY = origins.map { $0.y }.reduce(0.0, +) / CGFloat(origins.count)
-
-    // 2
-    let focusY = (avgY < midY) ? 0.75 * maxY : 0.25 * maxY
-
-    // 3
-    let focusX = (yaw.doubleValue < 0.0) ? -100.0 : maxX + 100.0
-
-    // 4
-    let focus = CGPoint(x: focusX, y: focusY)
-
-    // 5
-    for origin in origins {
-      let laser = Laser(origin: origin, focus: focus)
-      laserView.add(laser: laser)
-    }
-
-    // 6
-    DispatchQueue.main.async {
-      self.laserView.setNeedsDisplay()
-    }
-  }
 
   func detectedFace(request: VNRequest, error: Error?) {
     // 1
@@ -304,10 +286,5 @@ extension FaceDetectionViewController {
     }
 
     updateFaceView(for: result)
-//    if faceViewHidden {
-//      //updateLaserView(for: result)
-//    } else {
-//
-//    }
   }
 }
