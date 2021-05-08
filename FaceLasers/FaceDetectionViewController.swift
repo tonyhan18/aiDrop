@@ -239,6 +239,7 @@ extension FaceDetectionViewController {
     }
   }
 
+  // MARK - Laser
   // 1
   func updateLaserView(for result: VNFaceObservation) {
     // 2
@@ -302,10 +303,11 @@ extension FaceDetectionViewController {
         return
     }
 
-    if faceViewHidden {
-      updateLaserView(for: result)
-    } else {
-      updateFaceView(for: result)
-    }
+    updateFaceView(for: result)
+//    if faceViewHidden {
+//      //updateLaserView(for: result)
+//    } else {
+//
+//    }
   }
 }
