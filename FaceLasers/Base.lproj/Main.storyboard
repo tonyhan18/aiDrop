@@ -18,19 +18,24 @@
                         <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <view contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="9SK-4K-rvp" customClass="FaceView" customModule="FaceLasers" customModuleProvider="target">
+                            <view contentMode="scaleToFill" ambiguous="YES" translatesAutoresizingMaskIntoConstraints="NO" id="9SK-4K-rvp" customClass="FaceView" customModule="FaceLasers" customModuleProvider="target">
                                 <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <subviews>
-                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="EyeBlinked: " textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="EOA-sJ-tJh">
-                                        <rect key="frame" x="106" y="532" width="163" height="21"/>
-                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="EyeBlinked: " textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="EOA-sJ-tJh">
+                                        <rect key="frame" x="100" y="546.5" width="175" height="20.5"/>
                                         <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                         <color key="textColor" systemColor="systemGreenColor"/>
                                         <nil key="highlightedColor"/>
                                     </label>
                                 </subviews>
                                 <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                <constraints>
+                                    <constraint firstItem="EOA-sJ-tJh" firstAttribute="leading" secondItem="9SK-4K-rvp" secondAttribute="leading" constant="100" id="4Wj-61-M8c"/>
+                                    <constraint firstAttribute="width" constant="375" id="HZp-hv-3ON"/>
+                                    <constraint firstAttribute="bottom" secondItem="EOA-sJ-tJh" secondAttribute="bottom" constant="100" id="MPX-9S-LBf"/>
+                                    <constraint firstAttribute="trailing" secondItem="EOA-sJ-tJh" secondAttribute="trailing" constant="100" id="Osv-6c-eIX"/>
+                                    <constraint firstAttribute="height" constant="667" id="hcm-iT-03n"/>
+                                </constraints>
                             </view>
                             <visualEffectView opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="a1G-aU-0il">
                                 <rect key="frame" x="142" y="626" width="91" height="41"/>
@@ -74,6 +79,7 @@
                         <gestureRecognizers/>
                         <constraints>
                             <constraint firstItem="5E3-3m-hrQ" firstAttribute="bottom" secondItem="a1G-aU-0il" secondAttribute="bottom" id="V5A-MX-mnW"/>
+                            <constraint firstItem="9SK-4K-rvp" firstAttribute="centerX" secondItem="a1G-aU-0il" secondAttribute="centerX" id="t5L-ww-hXJ"/>
                             <constraint firstItem="a1G-aU-0il" firstAttribute="centerX" secondItem="U9Y-eo-qQq" secondAttribute="centerXWithinMargins" id="uj3-C2-6Bl"/>
                         </constraints>
                         <connections>

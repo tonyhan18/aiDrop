@@ -74,9 +74,9 @@ extension FaceDetectionViewController {
     faceViewHidden = faceView.isHidden
     
     if faceViewHidden {
-      faceLaserLabel.text = "Lasers"
+      faceLaserLabel.text = "Show"
     } else {
-      faceLaserLabel.text = "Face"
+      faceLaserLabel.text = "Hide"
     }
   }
 }
