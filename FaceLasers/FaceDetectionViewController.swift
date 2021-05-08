@@ -34,9 +34,11 @@ class FaceDetectionViewController: UIViewController {
   var sequenceHandler = VNSequenceRequestHandler()
 
   @IBOutlet var faceView: FaceView!
-  @IBOutlet var laserView: LaserView!
   @IBOutlet var faceLaserLabel: UILabel!
-  
+  @IBOutlet weak var blinkCounterUp: UILabel!
+
+  var blinkCounter : Int = 0
+
   let session = AVCaptureSession()
   var previewLayer: AVCaptureVideoPreviewLayer!
   
@@ -56,8 +58,6 @@ class FaceDetectionViewController: UIViewController {
     super.viewDidLoad()
     configureCaptureSession()
     
-    laserView.isHidden = true
-    
     maxX = view.bounds.maxX
     midY = view.bounds.midY
     maxY = view.bounds.maxY
@@ -71,7 +71,6 @@ class FaceDetectionViewController: UIViewController {
 extension FaceDetectionViewController {
   @IBAction func handleTap(_ sender: UITapGestureRecognizer) {
     faceView.isHidden.toggle()
-    laserView.isHidden.toggle()
     faceViewHidden = faceView.isHidden
     
     if faceViewHidden {
@@ -261,6 +260,12 @@ extension FaceDetectionViewController {
         if (FaceDetectionViewController.isEyeClosed == false) {
           FaceDetectionViewController.isEyeClosed = true
           print(EAR)
+          DispatchQueue.global(qos: .background).async {
+              DispatchQueue.main.async {
+                self.blinkCounterUp.text = "EyeBlinked: " + "\(self.blinkCounter + 1)"
+                self.blinkCounter += 1
+              }
+          }
         }
       }
       else {
