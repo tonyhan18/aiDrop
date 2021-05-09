@@ -30,10 +30,9 @@ import UIKit
 import Vision
 
 class FaceView: UIView {
-
+  
   var leftEye: [CGPoint] = []
   var rightEye: [CGPoint] = []
-
   var boundingBox = CGRect.zero
   
   func clear() {

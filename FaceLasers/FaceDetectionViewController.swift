@@ -35,10 +35,19 @@ class FaceDetectionViewController: UIViewController {
 
   @IBOutlet var faceView: FaceView!
   @IBOutlet var faceLaserLabel: UILabel!
-  @IBOutlet weak var blinkCounterUp: UILabel!
-
-  var blinkCounter : Int = 0
-
+  @IBOutlet weak var blinkCounterLabel: UILabel!
+  @IBOutlet weak var detectionCounterLabel: UILabel!
+  
+  var blinkCounter: Int = 0
+  
+  // MARK: - Variables for Detection Frame Counter
+  var detectionCounterPerSecond: Int = 0
+  var detectionCounterMax: Int = 0
+  var detectionBaseTime: Double = 0
+  var detectionLastTime: Double = 0
+  var detectionCurrentTime: Double = 0
+  var detectionOnGoing: Bool = false
+  
   let session = AVCaptureSession()
   var previewLayer: AVCaptureVideoPreviewLayer!
   
@@ -121,8 +130,9 @@ extension FaceDetectionViewController {
   }
 }
 
-// MARK: - AVCaptureVideoDataOutputSampleBufferDelegate methods
 
+
+// MARK: - AVCaptureVideoDataOutputSampleBufferDelegate methods
 extension FaceDetectionViewController: AVCaptureVideoDataOutputSampleBufferDelegate {
   func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
     // 1
@@ -204,6 +214,8 @@ extension FaceDetectionViewController {
         return sqrt(CGPointDistanceSquared(from: from, to: to))
     }
     
+    // MARK: - Detection Per Second
+    
     // MARK: - EAR calculation
     var leftEyeNormalizedPoints : [CGPoint]?
     var rightEyeNormalizedPoints : [CGPoint]?
@@ -253,6 +265,33 @@ extension FaceDetectionViewController {
     
 
     if (leftFlag && rightFlag) {
+      // update detection per second
+      if detectionOnGoing == false {
+        detectionOnGoing = true
+        detectionBaseTime = detectionCurrentTime
+        detectionCounterPerSecond = 1
+      }
+      else {
+        detectionCounterPerSecond += 1
+        if detectionBaseTime + 1 < detectionCurrentTime {
+          detectionBaseTime = detectionCurrentTime
+          detectionCounterMax = max(detectionCounterPerSecond, detectionCounterMax)
+          detectionCounterPerSecond = 1
+        }
+      }
+      
+      DispatchQueue.global(qos: .background).async {
+        DispatchQueue.main.async {
+          self.detectionCounterLabel.text = "\(self.detectionCounterMax)"
+        }
+      }
+      
+      detectionLastTime = detectionCurrentTime
+
+      // 1초가 지났으면, 카운터 초기화 후 라벨 업데이트
+      
+      // if not, increment coutner
+      
       let EARLeft = getEARLeft(eyePoints: leftEyeNormalizedPoints!)
       let EARRight = getEARRight(eyePoints: rightEyeNormalizedPoints!)
       let EAR = (EARLeft + EARRight) / 2
@@ -262,8 +301,8 @@ extension FaceDetectionViewController {
           print(EAR)
           DispatchQueue.global(qos: .background).async {
               DispatchQueue.main.async {
-                self.blinkCounterUp.text = "EyeBlinked: " + "\(self.blinkCounter + 1)"
                 self.blinkCounter += 1
+                self.blinkCounterLabel.text = "\(self.blinkCounter)"
               }
           }
         }
@@ -274,22 +313,30 @@ extension FaceDetectionViewController {
         }
       }
     }
+    
   }
-
-  // MARK - Laser
-  // 1
-
+  
   func detectedFace(request: VNRequest, error: Error?) {
-    // 1
+    detectionCurrentTime = Date().timeIntervalSince1970
     guard
       let results = request.results as? [VNFaceObservation],
       let result = results.first
       else {
-        // 2
+      
+      // detection time out
+      if detectionOnGoing == false || detectionLastTime + 0.4 < detectionCurrentTime {
+        detectionCounterPerSecond = 0
+        detectionOnGoing = false
+        DispatchQueue.global(qos: .background).async {
+            DispatchQueue.main.async {
+              self.detectionCounterLabel.text = "-"
+            }
+        }
+      }
         faceView.clear()
         return
-    }
-
+      }
+    // detected -> updaetFaceView
     updateFaceView(for: result)
   }
 }
