@@ -37,6 +37,7 @@ class FaceDetectionViewController: UIViewController {
   @IBOutlet var faceLaserLabel: UILabel!
   @IBOutlet weak var blinkCounterLabel: UILabel!
   @IBOutlet weak var detectionCounterLabel: UILabel!
+  @IBOutlet weak var statusLabel: UILabel!
   
   var blinkCounter: Int = 0
   
@@ -47,6 +48,23 @@ class FaceDetectionViewController: UIViewController {
   var detectionLastTime: Double = 0
   var detectionCurrentTime: Double = 0
   var detectionOnGoing: Bool = false
+  
+  var timeBeforeRequest: Double = 0
+  
+  var blinkTimePrevious: Double = -1
+  var blinkTimeCurrent: Double = 0
+  
+  var idle: Double = 0
+  let idle_upperbound: Double = 1.0
+  let idle_lowerbound: Double = 0.3
+  
+  var x_est: Double = 4.0
+  var x_sam: Double = 0
+  var x_var: Double = 0
+  let alpha: Double = 1.0 / 4
+  let beta: Double = 0.25
+  let K: Double = 0.25
+  var alertBaseTime: Double = 0
   
   let session = AVCaptureSession()
   var previewLayer: AVCaptureVideoPreviewLayer!
@@ -74,8 +92,6 @@ class FaceDetectionViewController: UIViewController {
     session.startRunning()
   }
 }
-
-// MARK: - Gesture methods
 
 extension FaceDetectionViewController {
   @IBAction func handleTap(_ sender: UITapGestureRecognizer) {
@@ -135,6 +151,34 @@ extension FaceDetectionViewController {
 // MARK: - AVCaptureVideoDataOutputSampleBufferDelegate methods
 extension FaceDetectionViewController: AVCaptureVideoDataOutputSampleBufferDelegate {
   func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
+    
+    let date = Date()
+    
+    timeBeforeRequest = date.timeIntervalSince1970
+    
+    if blinkTimePrevious != -1 && alertBaseTime + 10 < timeBeforeRequest {
+      var msg = ""
+      if x_est > 4.5 {
+        msg = "Blink!"
+      }
+      else {
+        msg = "Good"
+      }
+      DispatchQueue.global(qos: .background).async {
+        DispatchQueue.main.async {
+          self.statusLabel.text = msg
+        }
+      }
+      alertBaseTime = timeBeforeRequest
+    }
+    
+    // optimization
+    if blinkTimeCurrent + idle > timeBeforeRequest {
+      return // skip the request -> energy saving
+    }
+    
+    
+    
     // 1
     guard let imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else {
       return
@@ -162,7 +206,7 @@ extension FaceDetectionViewController {
 
     // 2
     let size = previewLayer.layerPointConverted(fromCaptureDevicePoint: rect.size.cgPoint)
-
+    
     // 3
     return CGRect(origin: origin, size: size.cgSize)
   }
@@ -265,13 +309,17 @@ extension FaceDetectionViewController {
     
 
     if (leftFlag && rightFlag) {
+      
+      
       // update detection per second
+      
       if detectionOnGoing == false {
         detectionOnGoing = true
         detectionBaseTime = detectionCurrentTime
         detectionCounterPerSecond = 1
       }
       else {
+        
         detectionCounterPerSecond += 1
         if detectionBaseTime + 1 < detectionCurrentTime {
           detectionBaseTime = detectionCurrentTime
@@ -285,9 +333,9 @@ extension FaceDetectionViewController {
           self.detectionCounterLabel.text = "\(self.detectionCounterMax)"
         }
       }
-      
-      detectionLastTime = detectionCurrentTime
 
+      detectionLastTime = detectionCurrentTime
+      
       // 1초가 지났으면, 카운터 초기화 후 라벨 업데이트
       
       // if not, increment coutner
@@ -295,10 +343,10 @@ extension FaceDetectionViewController {
       let EARLeft = getEARLeft(eyePoints: leftEyeNormalizedPoints!)
       let EARRight = getEARRight(eyePoints: rightEyeNormalizedPoints!)
       let EAR = (EARLeft + EARRight) / 2
-      if (EAR < 2.82) {
+      if (EAR < 2.75) {
         if (FaceDetectionViewController.isEyeClosed == false) {
           FaceDetectionViewController.isEyeClosed = true
-          print(EAR)
+//        print(EAR)
           DispatchQueue.global(qos: .background).async {
               DispatchQueue.main.async {
                 self.blinkCounter += 1
@@ -306,10 +354,29 @@ extension FaceDetectionViewController {
               }
           }
         }
+        
+        // optimization
+        blinkTimeCurrent = detectionCurrentTime
+        if blinkTimePrevious == -1 {
+          blinkTimePrevious = blinkTimeCurrent - 4
+        }
+        x_sam = blinkTimeCurrent - blinkTimePrevious
+        blinkTimePrevious = blinkTimeCurrent
+        print("samping: \(x_sam)")
+        x_est = alpha * x_sam + (1 - alpha) * x_est
+        x_var = beta * abs(x_sam - x_est) + (1 - beta) * x_var
+        print("estimation: \(x_est)")
+        print("variance: \(x_var)")
+        let blinkPerSecond = 1 / x_est
+        idle = max(min(K / (blinkPerSecond + 0.02 * x_var), idle_upperbound), idle_lowerbound)
+        print("idle: \(idle)")
+        
       }
       else {
         if (FaceDetectionViewController.isEyeClosed == true) {
           FaceDetectionViewController.isEyeClosed = false
+          
+          
         }
       }
     }
@@ -323,18 +390,27 @@ extension FaceDetectionViewController {
       let result = results.first
       else {
       
-      // detection time out
-      if detectionOnGoing == false || detectionLastTime + 0.4 < detectionCurrentTime {
-        detectionCounterPerSecond = 0
-        detectionOnGoing = false
-        DispatchQueue.global(qos: .background).async {
-            DispatchQueue.main.async {
-              self.detectionCounterLabel.text = "-"
-            }
+        // detection time out
+        if detectionOnGoing == false || detectionLastTime + 0.4 < detectionCurrentTime {
+          
+          // optimization
+          idle = 0 // keep trying to detect face.
+          blinkTimePrevious = -1
+          blinkTimeCurrent = 0
+          x_est = 4.0
+          x_var = 0.0
+          
+          
+          detectionCounterPerSecond = 0
+          detectionOnGoing = false
+          DispatchQueue.global(qos: .background).async {
+              DispatchQueue.main.async {
+                self.detectionCounterLabel.text = "-"
+              }
+          }
         }
-      }
-        faceView.clear()
-        return
+          faceView.clear()
+          return
       }
     // detected -> updaetFaceView
     updateFaceView(for: result)
